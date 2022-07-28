@@ -1,7 +1,4 @@
-import base64
 from drf_extra_fields.fields import Base64ImageField
-from django.contrib.auth.hashers import make_password
-from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
@@ -16,9 +13,6 @@ class AuthSerializer(serializers.Serializer):
 
 
 class SignUpSerializer(serializers.ModelSerializer):
-
-    #def validate_password(self, value):
-    #    return make_password(value)
 
     class Meta:
         model = User
@@ -230,7 +224,7 @@ class FollowSerializer(serializers.ModelSerializer):
             'recipes',
             'recipes_count'
         )
-    
+
     def get_is_subscribed(self, obj):
         return Follow.objects.filter(
             user=obj.user, author=obj.author
@@ -246,4 +240,3 @@ class FollowSerializer(serializers.ModelSerializer):
 
     def get_recipes_count(self, obj):
         return Recipe.objects.filter(author=obj.author).count()
-    

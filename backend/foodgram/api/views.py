@@ -5,16 +5,17 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
-                                   ListModelMixin, RetrieveModelMixin)
+from rest_framework.mixins import (CreateModelMixin, ListModelMixin,
+                                   RetrieveModelMixin)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet
+from rest_framework.viewsets import (GenericViewSet, ModelViewSet,
+                                     ReadOnlyModelViewSet)
 from rest_framework_simplejwt.tokens import SlidingToken
 
 from . import permissions, serializers
-from app.models import Cart, Favorite, Follow, Ingredient, Tag, Recipe, RecipeIngredients
+from app import models
 from users.models import User
 
 
@@ -66,7 +67,7 @@ class UserViewSet(CreateModelMixin, GenericViewSet,
     @action(detail=False, methods=['get'],
             permission_classes=[IsAuthenticated])
     def subscriptions(self, request):
-        queryset = Follow.objects.filter(user=request.user)
+        queryset = models.Follow.objects.filter(user=request.user)
         serializer = serializers.FollowSerializer(
             queryset, many=True,
             context={'request': request}
@@ -82,11 +83,11 @@ class UserViewSet(CreateModelMixin, GenericViewSet,
             return Response({
                 'errors': 'Вы не можете подписываться на самого себя'
             }, status=status.HTTP_400_BAD_REQUEST)
-        if Follow.objects.filter(user=user, author=author).exists():
+        if models.Follow.objects.filter(user=user, author=author).exists():
             return Response({
                 'errors': 'Вы уже подписаны на данного пользователя'
             }, status=status.HTTP_400_BAD_REQUEST)
-        follow = Follow.objects.create(user=user, author=author)
+        follow = models.Follow.objects.create(user=user, author=author)
         serializer = serializers.FollowSerializer(
             follow, context={'request': request}
         )
@@ -100,7 +101,7 @@ class UserViewSet(CreateModelMixin, GenericViewSet,
             return Response({
                 'errors': 'Вы не можете отписываться от самого себя'
             }, status=status.HTTP_400_BAD_REQUEST)
-        follow = Follow.objects.filter(user=user, author=author)
+        follow = models.Follow.objects.filter(user=user, author=author)
         if follow.exists():
             follow.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -116,19 +117,19 @@ class UserViewSet(CreateModelMixin, GenericViewSet,
 
 
 class IngredientViewSet(ReadOnlyModelViewSet):
-    queryset = Ingredient.objects.all()
+    queryset = models.Ingredient.objects.all()
     serializer_class = serializers.IngredientSerializer
     pagination_class = None
 
 
 class TagViewSet(ReadOnlyModelViewSet):
-    queryset = Tag.objects.all()
+    queryset = models.Tag.objects.all()
     serializer_class = serializers.TagSerializer
     pagination_class = None
 
 
 class RecipeViewSet(ModelViewSet):
-    queryset = Recipe.objects.all()
+    queryset = models.Recipe.objects.all()
     serializer_class = serializers.RecipeSerializer
     permission_classes = (permissions.IsAuthorOrReadOnly,)
 
@@ -138,12 +139,12 @@ class RecipeViewSet(ModelViewSet):
     @action(detail=True, methods=['post', 'delete'],
             permission_classes=[IsAuthenticated])
     def favorite(self, request, pk=None):
-        return self.method_select(request, pk, Favorite)
+        return self.method_select(request, pk, models.Favorite)
 
     @action(detail=True, methods=['post', 'delete'],
             permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk=None):
-        return self.method_select(request, pk, Cart)
+        return self.method_select(request, pk, models.Cart)
 
     def method_select(self, request, pk, model):
         if request.method == 'POST':
@@ -154,7 +155,7 @@ class RecipeViewSet(ModelViewSet):
 
     def add_obj(self, model, user, pk):
         if not model.objects.filter(user=user, recipe__id=pk).exists():
-            recipe = get_object_or_404(Recipe, id=pk)
+            recipe = get_object_or_404(models.Recipe, id=pk)
             model.objects.create(user=user, recipe=recipe)
             serializer = serializers.FollowRecipeSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -177,7 +178,7 @@ class RecipeViewSet(ModelViewSet):
             permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
         final_list = {}
-        ingredients = RecipeIngredients.objects.filter(
+        ingredients = models.RecipeIngredients.objects.filter(
             recipe__cart__user=request.user).values_list(
             'ingredient__name', 'ingredient__measurement_unit',
             'amount')

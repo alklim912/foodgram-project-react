@@ -1,6 +1,5 @@
 from django.db import models
 
-from foodgram.settings import MEDIA_ROOT
 from users.models import User
 
 
