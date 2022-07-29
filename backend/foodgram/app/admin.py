@@ -36,8 +36,15 @@ class FollowAdmin(admin.ModelAdmin):
     list_display = ('user', 'author')
 
 
+class CartAdmin(admin.ModelAdmin):
+    list_display = ('user', 'recipe')
+    search_fields = ('user__username',)
+    list_filter = ('recipe__tags__name',)
+
+
 admin.site.register(models.Ingredient, IngredientAdmin)
 admin.site.register(models.Tag, TagAdmin)
 admin.site.register(models.Recipe, RecipeAdmin)
 admin.site.register(models.RecipeIngredients, RecipeIngredientsAdmin)
 admin.site.register(models.Follow, FollowAdmin)
+admin.site.register(models.Cart, CartAdmin)

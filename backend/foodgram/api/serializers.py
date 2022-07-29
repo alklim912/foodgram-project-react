@@ -101,9 +101,12 @@ class TagSerializer(serializers.ModelSerializer):
         model = Tag
         fields = ('id', 'name', 'color', 'slug')
 
+    def to_internal_value(self, data):
+        return get_object_or_404(Tag, id=data)
+
 
 class RecipeSerializer(serializers.ModelSerializer):
-    tags = TagSerializer(read_only=True, many=True)
+    tags = TagSerializer(read_only=False, many=True)
     author = UserSerializer(read_only=True)
     image = Base64ImageField()
     ingredients = RecipeIngredientsSerializer(
@@ -142,7 +145,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         ingredients = self.initial_data.get('ingredients')
         if not ingredients:
             raise serializers.ValidationError(
-                {'ingredients': 'Нужен хотя бы один ингридиент'}
+                {'ingredients': 'Нужен хотя бы один ингредиент'}
             )
         ingredient_list = []
         for ingredient_item in ingredients:
@@ -163,36 +166,31 @@ class RecipeSerializer(serializers.ModelSerializer):
         return data
 
     def create_ingredients(self, ingredients, recipe):
-        for ingredient in ingredients:
-            RecipeIngredients.objects.create(
+        RecipeIngredients.objects.bulk_create(
+            RecipeIngredients(
                 recipe=recipe,
                 ingredient_id=ingredient.get('id'),
                 amount=ingredient.get('amount')
             )
+            for ingredient in ingredients
+        )
 
     def create(self, validated_data):
         image = validated_data.pop('image')
         ingredients_data = validated_data.pop('ingredients')
+        tags_data = validated_data.pop('tags')
         recipe = Recipe.objects.create(image=image, **validated_data)
-        tags_data = self.initial_data.get('tags')
         recipe.tags.set(tags_data)
         self.create_ingredients(ingredients_data, recipe)
         return recipe
 
     def update(self, instance, validated_data):
-        instance.image = validated_data.get('image', instance.image)
-        instance.name = validated_data.get('name', instance.name)
-        instance.text = validated_data.get('text', instance.text)
-        instance.cooking_time = validated_data.get(
-            'cooking_time', instance.cooking_time
-        )
         instance.tags.clear()
-        tags_data = self.initial_data.get('tags')
+        tags_data = validated_data.pop('tags')
         instance.tags.set(tags_data)
-        RecipeIngredients.objects.filter(recipe=instance).all().delete()
-        self.create_ingredients(validated_data.get('ingredients'), instance)
-        instance.save()
-        return instance
+        RecipeIngredients.objects.filter(recipe=instance).delete()
+        self.create_ingredients(validated_data.pop('ingredients'), instance)
+        return super().update(instance, validated_data)
 
 
 class FollowRecipeSerializer(serializers.ModelSerializer):

@@ -1,3 +1,4 @@
+from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from reportlab.pdfbase import pdfmetrics
@@ -25,8 +26,9 @@ class APIToken(APIView):
         serializer = serializers.AuthSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = get_object_or_404(
-            User, email=serializer.data['email'])
-        if user.check_password(serializer.data['password']) and user.is_active:
+            User, email=serializer.validated_data['email'])
+        if (user.check_password(serializer.validated_data['password'])
+                and user.is_active):
             token = {'auth_token': str(SlidingToken.for_user(user))}
             return Response(token, status=status.HTTP_200_OK)
         return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -58,8 +60,8 @@ class UserViewSet(CreateModelMixin, GenericViewSet,
         serializer = serializers.SetPasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = request.user
-        if user.check_password(serializer.data['current_password']):
-            user.set_password(serializer.data['new_password'])
+        if user.check_password(serializer.validated_data['current_password']):
+            user.set_password(serializer.validated_data['new_password'])
             user.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -177,20 +179,11 @@ class RecipeViewSet(ModelViewSet):
     @action(detail=False, methods=['get'],
             permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
-        final_list = {}
         ingredients = models.RecipeIngredients.objects.filter(
-            recipe__cart__user=request.user).values_list(
-            'ingredient__name', 'ingredient__measurement_unit',
-            'amount')
-        for item in ingredients:
-            name = item[0]
-            if name not in final_list:
-                final_list[name] = {
-                    'measurement_unit': item[1],
-                    'amount': item[2]
-                }
-            else:
-                final_list[name]['amount'] += item[2]
+            recipe__cart__user=request.user).order_by(
+                'ingredient__name').values_list(
+                    'ingredient__name', 'ingredient__measurement_unit'
+                ).annotate(amount_total=Sum('amount'))
         pdfmetrics.registerFont(
             TTFont('TNR', 'times.ttf', 'UTF-8')
         )
@@ -202,9 +195,8 @@ class RecipeViewSet(ModelViewSet):
         page.drawString(200, 800, 'Список ингредиентов')
         page.setFont('TNR', size=14)
         height = 750
-        for i, (name, data) in enumerate(final_list.items(), 1):
-            page.drawString(75, height, (f'{i}. {name} - {data["amount"]} '
-                                         f'{data["measurement_unit"]}.'))
+        for i, (name, unit, amount) in enumerate(ingredients, 1):
+            page.drawString(75, height, (f'{i}. {name} - {amount} {unit}.'))
             height -= 25
         page.showPage()
         page.save()

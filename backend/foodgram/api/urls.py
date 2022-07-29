@@ -14,7 +14,7 @@ router_v1.register('tags', views.TagViewSet, basename='tags')
 router_v1.register('recipes', views.RecipeViewSet, basename='recipes')
 
 urlpatterns = [
-    path('auth/token/login/', views.APIToken.as_view()),
-    path('auth/token/logout/', views.APILogout.as_view()),
+    path('auth/token/login/', views.APIToken.as_view(), name='login'),
+    path('auth/token/logout/', views.APILogout.as_view(), name='loguot'),
     path('', include(router_v1.urls))
 ]

@@ -1,6 +1,7 @@
 version: '3.3'
 services:
-
+  backend:
+    i
   frontend:
     build:
       context: ../frontend
