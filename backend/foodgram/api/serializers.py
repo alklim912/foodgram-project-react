@@ -1,7 +1,6 @@
 from drf_extra_fields.fields import Base64ImageField
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
 
 from app.models import Ingredient, Follow, Tag, Recipe, RecipeIngredients
 from users.models import User
@@ -87,12 +86,9 @@ class RecipeIngredientsSerializer(serializers.ModelSerializer):
     class Meta:
         model = RecipeIngredients
         fields = ('id', 'name', 'measurement_unit', 'amount')
-        validators = [
-            UniqueTogetherValidator(
-                queryset=RecipeIngredients.objects.all(),
-                fields=['ingredient', 'recipe']
-            )
-        ]
+
+    def to_internal_value(self, data):
+        return data
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -110,7 +106,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     image = Base64ImageField()
     ingredients = RecipeIngredientsSerializer(
-        source='recipe_ingredients', many=True, read_only=True)
+        source='recipe_ingredients', many=True, read_only=False)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
 
@@ -142,7 +138,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         return Recipe.objects.filter(cart__user=user, id=obj.id).exists()
 
     def validate(self, data):
-        ingredients = self.initial_data.get('ingredients')
+        ingredients = data.pop('recipe_ingredients')
         if not ingredients:
             raise serializers.ValidationError(
                 {'ingredients': 'Нужен хотя бы один ингредиент'}
