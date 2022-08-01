@@ -15,7 +15,7 @@ from rest_framework.viewsets import (GenericViewSet, ModelViewSet,
                                      ReadOnlyModelViewSet)
 from rest_framework_simplejwt.tokens import SlidingToken
 
-from . import permissions, serializers
+from . import filters, permissions, serializers
 from app import models
 from users.models import User
 
@@ -70,6 +70,13 @@ class UserViewSet(CreateModelMixin, GenericViewSet,
             permission_classes=[IsAuthenticated])
     def subscriptions(self, request):
         queryset = models.Follow.objects.filter(user=request.user)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = serializers.FollowSerializer(
+                page, many=True,
+                context={'request': request}
+            )
+            return self.get_paginated_response(serializer.data)
         serializer = serializers.FollowSerializer(
             queryset, many=True,
             context={'request': request}
@@ -122,6 +129,8 @@ class IngredientViewSet(ReadOnlyModelViewSet):
     queryset = models.Ingredient.objects.all()
     serializer_class = serializers.IngredientSerializer
     pagination_class = None
+    filter_backends = (filters.IngredientSearchFilter,)
+    search_fields = ('^name',)
 
 
 class TagViewSet(ReadOnlyModelViewSet):
@@ -134,6 +143,7 @@ class RecipeViewSet(ModelViewSet):
     queryset = models.Recipe.objects.all()
     serializer_class = serializers.RecipeSerializer
     permission_classes = (permissions.IsAuthorOrReadOnly,)
+    filter_class = filters.AuthorAndTagFilter
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
