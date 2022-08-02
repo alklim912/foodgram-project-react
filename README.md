@@ -1,5 +1,4 @@
-![1](https://github.com/alklim912/
-foodgram-project-react/actions/workflows/yamdb_workflow.yml/badge.svg)
+![1](https://github.com/alklim912/foodgram-project-react/actions/workflows/yamdb_workflow.yml/badge.svg)
 
 # foodgram
 # Продуктовый помощник.
@@ -63,7 +62,8 @@ foodgram-project-react/actions/workflows/yamdb_workflow.yml/badge.svg)
  ```docker compose exec backend python manage.py migrate```
  ```$ docker compose exec backend python manage.py createsuperuser```
  ```$ docker compose exec backend python manage.py collectstatic --no-input```
- ```$ docker compose exec backend python jsoninbd.py```
+ ```$ docker compose exec backend python manage.py load --tags```
+ ```$ docker compose exec backend python manage.py load --ingredients```
 
 
 

@@ -1,9 +1,6 @@
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfgen import canvas
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.mixins import (CreateModelMixin, ListModelMixin,
@@ -194,20 +191,10 @@ class RecipeViewSet(ModelViewSet):
                 'ingredient__name').values_list(
                     'ingredient__name', 'ingredient__measurement_unit'
                 ).annotate(amount_total=Sum('amount'))
-        pdfmetrics.registerFont(
-            TTFont('TNR', 'times.ttf', 'UTF-8')
-        )
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = ('attachment; '
-                                           'filename="shopping_list.pdf"')
-        page = canvas.Canvas(response)
-        page.setFont('TNR', size=16)
-        page.drawString(200, 800, 'Список ингредиентов')
-        page.setFont('TNR', size=14)
-        height = 750
+        shopping_list = 'Список покупок:\n'
         for i, (name, unit, amount) in enumerate(ingredients, 1):
-            page.drawString(75, height, (f'{i}. {name} - {amount} {unit}.'))
-            height -= 25
-        page.showPage()
-        page.save()
+            shopping_list += (f'{i}. {name} - {amount} {unit}.')
+        response = HttpResponse(shopping_list, content_type='text/plain')
+        response['Content-Disposition'] = (
+            'attachment; filename="shopping_list.txt"')
         return response
