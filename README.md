@@ -1,7 +1,8 @@
-![1](https://github.com/alklim912/foodgram-project-react/actions/workflows/yamdb_workflow.yml/badge.svg)
+![1](https://github.com/alklim912/foodgram-project-react/actions/workflows/foodgram_workflow.yml/badge.svg)
 
 # foodgram
-# Продуктовый помощник.
+# Продуктовый помощник
+доступен по адресу http://51.250.20.183/recipes
 
 ## Описание:
 Простая регистрация, удобный интерфейс, умная и удобная логика работы.
@@ -46,11 +47,17 @@
 ### Шаблон наполнения env-файла:
 
  DB_ENGINE=django.db.backends.postgresql # указываем, что работаем с postgresql
+ 
  DB_NAME=<имя базы данных>
+ 
  POSTGRES_USER=<логин для подключения к базе данных>
+ 
  POSTGRES_PASSWORD=<пароль для подключения к БД>
+ 
  DB_HOST=<название сервиса (контейнера)>
+ 
  DB_PORT=<порт для подключения к БД>
+ 
  SECRET_KEY=<значение ключа из файла settings.py>
 
 
@@ -59,9 +66,13 @@
  После первого деплоя на прод среде необходимо выполнить следующие команды:
 
  ```$ docker compose exec backend python manage.py makemigrations```
+ 
  ```docker compose exec backend python manage.py migrate```
+ 
  ```$ docker compose exec backend python manage.py createsuperuser```
+ 
  ```$ docker compose exec backend python manage.py collectstatic --no-input```
+ 
  ```$ docker compose exec backend python jsoninbd.py```
 
 
