@@ -1,5 +1,4 @@
-![1](https://github.com/alklim912/
-foodgram-project-react/actions/workflows/yamdb_workflow.yml/badge.svg)
+![1](https://github.com/alklim912/foodgram-project-react/actions/workflows/yamdb_workflow.yml/badge.svg)
 
 # foodgram
 # Продуктовый помощник.
