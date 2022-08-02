@@ -7,9 +7,10 @@ services:
     env_file:
       - ./.env
   backend:
-    image: alex2lir/foodgram:latest
+    image: alex2lir/foodgram:v.1.4
     restart: always
     volumes:
+      - ../data:/backend/data/
       - static_value:/backend/static/
       - media_value:/backend/media/
     depends_on:
