@@ -193,7 +193,7 @@ class RecipeViewSet(ModelViewSet):
                 ).annotate(amount_total=Sum('amount'))
         shopping_list = 'Список покупок:\n'
         for i, (name, unit, amount) in enumerate(ingredients, 1):
-            shopping_list += (f'{i}. {name} - {amount} {unit}.')
+            shopping_list += (f'{i}. {name} - {amount} {unit}.\n')
         response = HttpResponse(shopping_list, content_type='text/plain')
         response['Content-Disposition'] = (
             'attachment; filename="shopping_list.txt"')
